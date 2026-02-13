@@ -1,42 +1,74 @@
-import { Calendar, Home, Inbox, Search, Settings } from "lucide-react";
+import { Notebook, Pencil } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
   SidebarGroup,
   SidebarGroupContent,
   SidebarGroupLabel,
+  SidebarHeader,
   SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
 } from "@/components/ui/sidebar";
+import { Button } from "./ui/button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
 
-const items = [
-  { title: "Home", url: "#", icon: Home },
-  { title: "Inbox", url: "#", icon: Inbox },
-  { title: "Calendar", url: "#", icon: Calendar },
-  { title: "Search", url: "#", icon: Search },
-  { title: "Settings", url: "#", icon: Settings },
+const topButtons = [
+  {
+    title: "New text note",
+    action: () => console.log("New text note clicked"),
+    icon: Notebook,
+  },
+  {
+    title: "New drawing note",
+    action: () => console.log("New drawing note clicked"),
+    icon: Pencil,
+  },
 ];
+
+const ButtonWithTooltip: React.FC<{
+  title: string;
+  icon: React.ElementType;
+  action: () => void;
+}> = ({ title, icon: Icon, action }) => {
+  return (
+    <Tooltip>
+      <TooltipTrigger>
+        <Button key={title} variant="outline" size="sm" onMouseDown={action}>
+          <Icon />
+        </Button>
+      </TooltipTrigger>
+      <TooltipContent>
+        <p>{title}</p>
+      </TooltipContent>
+    </Tooltip>
+  );
+};
 
 export function AppSidebar() {
   return (
     <Sidebar>
+      <SidebarHeader>
+        <div className="flex w-full items-center justify-center gap-2">
+          {topButtons.map((button) => (
+            <ButtonWithTooltip
+              key={button.title}
+              title={button.title}
+              icon={button.icon}
+              action={button.action}
+            />
+          ))}
+        </div>
+      </SidebarHeader>
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>Application</SidebarGroupLabel>
+          <SidebarGroupLabel>Buffer</SidebarGroupLabel>
           <SidebarGroupContent>
-            <SidebarMenu>
-              {items.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
-                    <a href={item.url}>
-                      <item.icon />
-                      <span>{item.title}</span>
-                    </a>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
+            <SidebarMenu />
+          </SidebarGroupContent>
+        </SidebarGroup>
+        <SidebarGroup>
+          <SidebarGroupLabel>Available files</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu />
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>

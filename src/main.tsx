@@ -6,6 +6,12 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { DarkmodeToggle } from "@/components/ui/darkmode-toggle";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import App from "./App";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "./components/ui/tooltip";
 
 const container = document.getElementById("root");
 
@@ -14,16 +20,23 @@ const root = createRoot(container!);
 root.render(
   <React.StrictMode>
     <ThemeProvider defaultTheme="dark" storageKey="lunarscribe-theme">
-      <SidebarProvider>
-        <AppSidebar />
-        <main className="flex h-screen w-full flex-col overflow-hidden p-2">
-          <header className="mb-4 flex items-center gap-2">
-            <SidebarTrigger />
-            <DarkmodeToggle />
-          </header>
-          <App />
-        </main>
-      </SidebarProvider>
+      <TooltipProvider delayDuration={300} skipDelayDuration={150}>
+        <SidebarProvider>
+          <AppSidebar />
+          <main className="flex h-screen w-full flex-col overflow-hidden p-2">
+            <header className="mb-4 flex items-center gap-2">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <SidebarTrigger />
+                </TooltipTrigger>
+                <TooltipContent>Toggle sidebar</TooltipContent>
+              </Tooltip>
+              <DarkmodeToggle />
+            </header>
+            <App />
+          </main>
+        </SidebarProvider>
+      </TooltipProvider>
     </ThemeProvider>
   </React.StrictMode>,
 );
