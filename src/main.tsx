@@ -7,12 +7,8 @@ import { DarkmodeToggle } from "@/components/ui/darkmode-toggle";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { Toaster } from "@/components/ui/sonner";
 import App from "./App";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "./components/ui/tooltip";
+import { TooltipProvider } from "./components/ui/tooltip";
+import { FileRename } from "./file-rename";
 
 const container = document.getElementById("root");
 
@@ -24,15 +20,11 @@ root.render(
       <TooltipProvider delayDuration={300} skipDelayDuration={150}>
         <SidebarProvider>
           <AppSidebar />
-          <main className="flex h-screen w-full flex-col overflow-hidden p-2">
-            <header className="mb-4 flex items-center gap-2">
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <SidebarTrigger />
-                </TooltipTrigger>
-                <TooltipContent>Toggle sidebar</TooltipContent>
-              </Tooltip>
+          <main className="flex h-screen w-full flex-col overflow-hidden">
+            <header className="flex items-center gap-2 bg-sidebar p-2">
+              <SidebarTrigger />
               <DarkmodeToggle />
+              <FileRename />
             </header>
             <App />
           </main>

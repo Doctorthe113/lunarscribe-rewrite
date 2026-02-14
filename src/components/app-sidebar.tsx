@@ -1,4 +1,5 @@
 import { Notebook, Pencil, Save } from "lucide-react";
+import { useEffect, useState } from "react";
 import {
   Sidebar,
   SidebarContent,
@@ -7,8 +8,15 @@ import {
   SidebarGroupLabel,
   SidebarHeader,
   SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
 } from "@/components/ui/sidebar";
-import { getUniqueFilename, writeFile } from "@/lib/filesystem";
+import {
+  getUniqueFilename,
+  listFiles,
+  readFile,
+  writeFile,
+} from "@/lib/filesystem";
 import { useNoteStore } from "@/lib/note-zustand";
 import { Button } from "./ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
@@ -38,7 +46,8 @@ const ButtonWithTooltip: React.FC<{
 };
 
 export function AppSidebar() {
-  const { setCurrentFile, currentFile } = useNoteStore();
+  const { setCurrentFile, buffer, currentFile } = useNoteStore();
+  const [availableFilenames, setAvailableFilenames] = useState<string[]>([]);
 
   const topButtons = [
     {
@@ -73,8 +82,17 @@ export function AppSidebar() {
     },
   ];
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: <Need to depend on currentFile>
+  useEffect(() => {
+    async function checkAvailableFiles() {
+      const files = await listFiles();
+      setAvailableFilenames(files.map((file) => file.split(".")[0]));
+    }
+    checkAvailableFiles();
+  }, [currentFile]);
+
   return (
-    <Sidebar>
+    <Sidebar className="border-none">
       <SidebarHeader>
         <div className="flex w-full items-center justify-center gap-2">
           {topButtons.map((button) => (
@@ -88,16 +106,42 @@ export function AppSidebar() {
         </div>
       </SidebarHeader>
       <SidebarContent>
-        <SidebarGroup>
+        <SidebarGroup className="pt-0">
           <SidebarGroupLabel>Buffer</SidebarGroupLabel>
           <SidebarGroupContent>
-            <SidebarMenu />
+            <SidebarMenu>
+              {buffer.map((note) => (
+                <SidebarMenuItem
+                  key={note.filename}
+                  onClick={() => setCurrentFile(note)}
+                >
+                  {note.filename}
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
         <SidebarGroup>
           <SidebarGroupLabel>Available files</SidebarGroupLabel>
           <SidebarGroupContent>
-            <SidebarMenu />
+            <SidebarMenu>
+              {availableFilenames.map((filename) => (
+                <SidebarMenuButton
+                  size={"sm"}
+                  key={filename}
+                  onClick={async () => {
+                    const content = await readFile({ filename, type: "md" });
+                    setCurrentFile({
+                      filename,
+                      content: content || "",
+                      type: "md",
+                    });
+                  }}
+                >
+                  {filename}
+                </SidebarMenuButton>
+              ))}
+            </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>

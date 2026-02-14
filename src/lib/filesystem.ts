@@ -2,6 +2,7 @@ import {
   BaseDirectory,
   exists,
   mkdir,
+  readDir,
   readTextFile,
   remove,
   rename,
@@ -73,7 +74,7 @@ export async function writeFile(note: Note) {
 }
 
 // reads file content
-export async function readFile(note: Note) {
+export async function readFile(note: Pick<Note, "filename" | "type">) {
   const resolvedPath = resolvePath(note);
   if (!resolvedPath) return;
 
@@ -130,4 +131,18 @@ export async function fileExists(note: Note) {
   );
   if (error) throw new Error(`Exists check failed: ${error}`);
   return Boolean(data);
+}
+
+// lists files in lunarscribe dir
+export async function listFiles() {
+  await ensureLunarscribeDirExists();
+
+  const { data: entries, error } = await tryCatch(
+    readDir(LUNARSCRIBE_BASE_PATH, { baseDir: BaseDirectory.Document }),
+  );
+  if (error) throw new Error(`List failed: ${error}`);
+
+  return (entries ?? [])
+    .filter((e) => e.name?.endsWith(".md") || e.name?.endsWith(".draw"))
+    .map((e) => e.name!);
 }
