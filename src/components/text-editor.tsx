@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  $convertFromMarkdownString,
   BOLD_ITALIC_STAR,
   BOLD_ITALIC_UNDERSCORE,
   BOLD_STAR,
@@ -13,6 +14,7 @@ import {
 import { AutoFocusPlugin } from "@lexical/react/LexicalAutoFocusPlugin";
 import { LexicalComposer } from "@lexical/react/LexicalComposer";
 import { ContentEditable } from "@lexical/react/LexicalContentEditable";
+import { EditorRefPlugin } from "@lexical/react/LexicalEditorRefPlugin";
 import { LexicalErrorBoundary } from "@lexical/react/LexicalErrorBoundary";
 import { HistoryPlugin } from "@lexical/react/LexicalHistoryPlugin";
 import { MarkdownShortcutPlugin } from "@lexical/react/LexicalMarkdownShortcutPlugin";
@@ -20,8 +22,11 @@ import { OnChangePlugin } from "@lexical/react/LexicalOnChangePlugin";
 import { RichTextPlugin } from "@lexical/react/LexicalRichTextPlugin";
 import { TabIndentationPlugin } from "@lexical/react/LexicalTabIndentationPlugin";
 import { HeadingNode } from "@lexical/rich-text";
+import { $getRoot, type LexicalEditor } from "lexical";
+import { useRef } from "react";
+import { toast } from "sonner";
+import { useNoteStore } from "@/lib/note-zustand";
 
-// theme for tailwind
 const THEME = {
   heading: {
     h1: "text-3xl font-bold mt-4 mb-2",
@@ -48,24 +53,43 @@ const TRANSFORMERS = [
 ];
 
 const onError = (error: Error) => {
-  console.error(error);
+  toast.error(error.message);
 };
 
-// minimal editor component
 export default function TextEditor() {
+  const { currentFile, updateNote } = useNoteStore();
+  const editorRef = useRef<LexicalEditor | null>(null);
+
   const initialConfig = {
     namespace: "TextEditor",
     theme: THEME,
     onError,
     nodes: [HeadingNode],
+    editorState: () =>
+      $convertFromMarkdownString(
+        currentFile.content || "",
+        TRANSFORMERS,
+        undefined,
+        true,
+      ),
   };
 
-  // placeholder for saving
-  const handleSave = () => {};
+  // saves content to store on change
+  const handleSave = () => {
+    if (!editorRef.current) return;
+    editorRef.current.read(() => {
+      const rawText = $getRoot().getTextContent();
+      updateNote(currentFile.filename, rawText, currentFile.type);
+      console.log(rawText);
+    });
+  };
+
+  if (!currentFile) return null;
 
   return (
-    <div className="relative w-full max-w-3xl border">
-      <LexicalComposer initialConfig={initialConfig}>
+    <div className="relative w-full max-w-3xl">
+      <LexicalComposer initialConfig={initialConfig} key={currentFile.filename}>
+        <EditorRefPlugin editorRef={editorRef} />
         <RichTextPlugin
           contentEditable={<ContentEditable className="outline-none" />}
           placeholder={
@@ -76,7 +100,7 @@ export default function TextEditor() {
           ErrorBoundary={LexicalErrorBoundary}
         />
         <HistoryPlugin />
-        <OnChangePlugin onChange={handleSave} />
+        <OnChangePlugin onChange={handleSave} ignoreSelectionChange />
         <MarkdownShortcutPlugin transformers={TRANSFORMERS} />
         <AutoFocusPlugin />
         <TabIndentationPlugin />

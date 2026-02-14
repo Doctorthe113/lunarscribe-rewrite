@@ -10,8 +10,6 @@ import {
 import type { Note } from "@/lib/note-zustand";
 import { tryCatch } from "@/lib/try-catch";
 
-type FileType = "md" | "draw" | "others";
-
 const LUNARSCRIBE_BASE_PATH = "lunarscribe";
 
 async function ensureLunarscribeDirExists() {
@@ -24,20 +22,18 @@ async function ensureLunarscribeDirExists() {
   if (error) throw new Error(`Mkdir failed: ${error}`);
 }
 
-// resolves filename to path in lunarscribe folder, returns null if invalid type
+// resolves note to path, null if invalid type
 function resolvePath(note: Pick<Note, "filename" | "type">) {
-  const trimmedName = note.filename.trim() || "untitled";
-  const nameWithoutExtension = trimmedName.replace(/\.[^/.]+$/, "");
-  const extensionFromName = trimmedName.includes(".")
-    ? (trimmedName.split(".").pop() ?? "")
-    : "";
-  const finalExtension = note.type ?? extensionFromName;
-  if (finalExtension !== "md" && finalExtension !== "draw") return null;
-  return `${LUNARSCRIBE_BASE_PATH}/${nameWithoutExtension}.${finalExtension}`;
+  const trimmed = note.filename.trim() || "untitled";
+  const baseName = trimmed.replace(/\.[^/.]+$/, "");
+  const ext =
+    note.type ?? (trimmed.includes(".") ? trimmed.split(".").pop() : "");
+  if (ext !== "md" && ext !== "draw") return null;
+  return `${LUNARSCRIBE_BASE_PATH}/${baseName}.${ext}`;
 }
 
 // gets unique filename by adding suffix
-export async function getUniqueFilename(note: Note) {
+export async function getUniqueFilename(note: Pick<Note, "filename" | "type">) {
   const resolvedPath = resolvePath(note);
   if (!resolvedPath) return note.filename;
 
@@ -46,17 +42,16 @@ export async function getUniqueFilename(note: Note) {
   );
   if (!isTaken) return note.filename;
 
-  const nameWithoutExtension = note.filename.trim().replace(/\.[^/.]+$/, "");
-  const ext = note.type;
+  const baseName = note.filename.trim().replace(/\.[^/.]+$/, "");
 
   let suffix = 1;
   while (true) {
-    const candidateName = `${nameWithoutExtension}(${suffix})`;
+    const candidateName = `${baseName}(${suffix})`;
     const candidatePath = resolvePath({ ...note, filename: candidateName });
     const { data: taken } = await tryCatch(
       exists(candidatePath!, { baseDir: BaseDirectory.Document }),
     );
-    if (!taken) return `${candidateName}.${ext}`;
+    if (!taken) return `${candidateName}.${note.type}`;
     suffix += 1;
   }
 }
@@ -65,7 +60,7 @@ export async function getUniqueFilename(note: Note) {
 export async function writeFile(note: Note) {
   await ensureLunarscribeDirExists();
 
-  const resolvedPath = resolvePath(note.filename, note.type);
+  const resolvedPath = resolvePath(note);
   if (!resolvedPath) return;
 
   const { error } = await tryCatch(
@@ -77,9 +72,9 @@ export async function writeFile(note: Note) {
   return resolvedPath;
 }
 
-// reads file text only
+// reads file content
 export async function readFile(note: Note) {
-  const resolvedPath = resolvePath(note.filename, note.type);
+  const resolvedPath = resolvePath(note);
   if (!resolvedPath) return;
 
   const { data, error } = await tryCatch(
@@ -89,10 +84,10 @@ export async function readFile(note: Note) {
   return data ?? "";
 }
 
-// renames with duplicate suffix
+// renames with unique suffix
 export async function renameFile(note: Note, newFilename: string) {
-  const oldPath = resolvePath(note.filename, note.type);
-  const newPath = resolvePath(newFilename, note.type);
+  const oldPath = resolvePath(note);
+  const newPath = resolvePath({ ...note, filename: newFilename });
   if (!oldPath || !newPath) return;
   if (oldPath === newPath) return newPath;
 
@@ -100,7 +95,7 @@ export async function renameFile(note: Note, newFilename: string) {
     ...note,
     filename: newFilename,
   });
-  const uniqueNewPath = resolvePath(targetFilename, note.type);
+  const uniqueNewPath = resolvePath({ ...note, filename: targetFilename });
   if (!uniqueNewPath) return;
 
   const { error } = await tryCatch(
@@ -113,9 +108,9 @@ export async function renameFile(note: Note, newFilename: string) {
   return uniqueNewPath;
 }
 
-// deletes file and returns true
+// deletes file
 export async function deleteFile(note: Note) {
-  const resolvedPath = resolvePath(note.filename, note.type);
+  const resolvedPath = resolvePath(note);
   if (!resolvedPath) return;
 
   const { error } = await tryCatch(
@@ -125,9 +120,9 @@ export async function deleteFile(note: Note) {
   return true;
 }
 
-// checks file existence boolean
+// checks file existence
 export async function fileExists(note: Note) {
-  const resolvedPath = resolvePath(note.filename, note.type);
+  const resolvedPath = resolvePath(note);
   if (!resolvedPath) return false;
 
   const { data, error } = await tryCatch(

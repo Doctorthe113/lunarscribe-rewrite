@@ -1,4 +1,4 @@
-import { Notebook, Pencil } from "lucide-react";
+import { Notebook, Pencil, Save } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -8,6 +8,7 @@ import {
   SidebarHeader,
   SidebarMenu,
 } from "@/components/ui/sidebar";
+import { getUniqueFilename, writeFile } from "@/lib/filesystem";
 import { useNoteStore } from "@/lib/note-zustand";
 import { Button } from "./ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
@@ -19,8 +20,13 @@ const ButtonWithTooltip: React.FC<{
 }> = ({ title, icon: Icon, action }) => {
   return (
     <Tooltip>
-      <TooltipTrigger>
-        <Button key={title} variant="outline" size="sm" onMouseDown={action}>
+      <TooltipTrigger asChild>
+        <Button
+          key={title}
+          variant="ghost"
+          className="size-7"
+          onMouseDown={action}
+        >
           <Icon />
         </Button>
       </TooltipTrigger>
@@ -32,19 +38,38 @@ const ButtonWithTooltip: React.FC<{
 };
 
 export function AppSidebar() {
-  const { setCurrentFile } = useNoteStore();
+  const { setCurrentFile, currentFile } = useNoteStore();
+
   const topButtons = [
     {
       title: "New text note",
-      action: () =>
-        setCurrentFile({ filename: "untitled", content: "", type: "md" }),
+      action: async () => {
+        const uniqueFilename = await getUniqueFilename({
+          filename: "untitled",
+          type: "md",
+        });
+        setCurrentFile({ filename: uniqueFilename, content: "", type: "md" });
+      },
       icon: Notebook,
     },
     {
       title: "New drawing note",
-      action: () =>
-        setCurrentFile({ filename: "untitled", content: "", type: "draw" }),
+      action: async () => {
+        const uniqueFilename = await getUniqueFilename({
+          filename: "untitled",
+          type: "draw",
+        });
+        setCurrentFile({ filename: uniqueFilename, content: "", type: "draw" });
+      },
       icon: Pencil,
+    },
+    {
+      title: "Save file",
+      action: async () => {
+        if (!currentFile) return;
+        await writeFile(currentFile);
+      },
+      icon: Save,
     },
   ];
 

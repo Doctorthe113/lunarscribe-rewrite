@@ -5,6 +5,7 @@ import { AppSidebar } from "@/components/app-sidebar";
 import { ThemeProvider } from "@/components/theme-provider";
 import { DarkmodeToggle } from "@/components/ui/darkmode-toggle";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import { Toaster } from "@/components/ui/sonner";
 import App from "./App";
 import {
   Tooltip,
@@ -35,6 +36,7 @@ root.render(
             </header>
             <App />
           </main>
+          <Toaster />
         </SidebarProvider>
       </TooltipProvider>
     </ThemeProvider>
