@@ -1,18 +1,19 @@
 import { create } from "zustand";
 
-export interface Note {
+export type Note = {
   filename: string;
-  timestamp: string;
+  timestamp?: string;
   content: string;
-}
+  type: "md" | "draw";
+};
 
-interface NoteState {
+type NoteState = {
   buffer: Note[];
   currentFile: Note | null;
   setBuffer: (buffer: Note[]) => void;
   setCurrentFile: (file: Note | null) => void;
   updateNote: (filename: string, content: string) => void;
-}
+};
 
 // store for managing notes
 export const useNoteStore = create<NoteState>((set) => ({

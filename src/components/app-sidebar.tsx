@@ -8,21 +8,9 @@ import {
   SidebarHeader,
   SidebarMenu,
 } from "@/components/ui/sidebar";
+import { useNoteStore } from "@/lib/note-zustand";
 import { Button } from "./ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
-
-const topButtons = [
-  {
-    title: "New text note",
-    action: () => console.log("New text note clicked"),
-    icon: Notebook,
-  },
-  {
-    title: "New drawing note",
-    action: () => console.log("New drawing note clicked"),
-    icon: Pencil,
-  },
-];
 
 const ButtonWithTooltip: React.FC<{
   title: string;
@@ -44,6 +32,22 @@ const ButtonWithTooltip: React.FC<{
 };
 
 export function AppSidebar() {
+  const { setCurrentFile } = useNoteStore();
+  const topButtons = [
+    {
+      title: "New text note",
+      action: () =>
+        setCurrentFile({ filename: "untitled", content: "", type: "md" }),
+      icon: Notebook,
+    },
+    {
+      title: "New drawing note",
+      action: () =>
+        setCurrentFile({ filename: "untitled", content: "", type: "draw" }),
+      icon: Pencil,
+    },
+  ];
+
   return (
     <Sidebar>
       <SidebarHeader>
