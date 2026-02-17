@@ -9,14 +9,8 @@ import {
   SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
-  SidebarMenuItem,
 } from "@/components/ui/sidebar";
-import {
-  getUniqueFilename,
-  listFiles,
-  readFile,
-  writeFile,
-} from "@/lib/filesystem";
+import { createFile, listFiles, readFile, saveFile } from "@/lib/filesystem";
 import { useNoteStore } from "@/lib/note-zustand";
 import { Button } from "./ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
@@ -53,22 +47,16 @@ export function AppSidebar() {
     {
       title: "New text note",
       action: async () => {
-        const uniqueFilename = await getUniqueFilename({
-          filename: "untitled",
-          type: "md",
-        });
-        setCurrentFile({ filename: uniqueFilename, content: "", type: "md" });
+        const filename = await createFile("md", "");
+        setCurrentFile({ filename, content: "", type: "md" });
       },
       icon: Notebook,
     },
     {
       title: "New drawing note",
       action: async () => {
-        const uniqueFilename = await getUniqueFilename({
-          filename: "untitled",
-          type: "draw",
-        });
-        setCurrentFile({ filename: uniqueFilename, content: "", type: "draw" });
+        const filename = await createFile("draw", "");
+        setCurrentFile({ filename, content: "", type: "draw" });
       },
       icon: Pencil,
     },
@@ -76,11 +64,28 @@ export function AppSidebar() {
       title: "Save file",
       action: async () => {
         if (!currentFile) return;
-        await writeFile(currentFile);
+        await saveFile(
+          currentFile.filename,
+          currentFile.type,
+          currentFile.content,
+        );
       },
       icon: Save,
     },
   ];
+
+  const changeTabs = async (newTabFilename: string) => {
+    const content = currentFile?.content || "";
+    const type = currentFile?.type || "md";
+    await saveFile(currentFile?.filename || newTabFilename, type, content);
+
+    const newContent = await readFile({ filename: newTabFilename, type: "md" });
+    setCurrentFile({
+      filename: newTabFilename,
+      content: newContent || "",
+      type: "md",
+    });
+  };
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: <Need to depend on currentFile>
   useEffect(() => {
@@ -111,12 +116,13 @@ export function AppSidebar() {
           <SidebarGroupContent>
             <SidebarMenu>
               {buffer.map((note) => (
-                <SidebarMenuItem
+                <SidebarMenuButton
+                  size={"sm"}
                   key={note.filename}
-                  onClick={() => setCurrentFile(note)}
+                  onClick={async () => await changeTabs(note.filename)}
                 >
                   {note.filename}
-                </SidebarMenuItem>
+                </SidebarMenuButton>
               ))}
             </SidebarMenu>
           </SidebarGroupContent>
@@ -129,14 +135,7 @@ export function AppSidebar() {
                 <SidebarMenuButton
                   size={"sm"}
                   key={filename}
-                  onClick={async () => {
-                    const content = await readFile({ filename, type: "md" });
-                    setCurrentFile({
-                      filename,
-                      content: content || "",
-                      type: "md",
-                    });
-                  }}
+                  onClick={async () => await changeTabs(filename)}
                 >
                   {filename}
                 </SidebarMenuButton>

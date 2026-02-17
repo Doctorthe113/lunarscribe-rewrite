@@ -10,20 +10,28 @@ export function FileRename() {
   const [newName, setNewName] = useState(currentFile?.filename || "untitled");
 
   const handleRename = async () => {
-    if (!currentFile || newName === currentFile.filename) return;
-    const { error } = await tryCatch(renameFile(currentFile, newName));
+    if (newName === currentFile.filename) return;
 
-    if (!error) setCurrentFile({ ...currentFile, filename: newName });
+    const { data: finalName, error } = await tryCatch(
+      renameFile(currentFile, newName),
+    );
 
     if (error) {
       toast.error(error.message);
+      return;
+    }
+
+    if (finalName) {
+      setCurrentFile({ ...currentFile, filename: finalName });
+      setNewName(finalName);
     }
   };
 
   return (
     <Input
-      className="mx-auto h-6 w-min min-w-0 border-none text-primary shadow-none ring-0 dark:bg-transparent"
+      className="mx-auto h-6 w-min min-w-0 border-none text-center text-primary shadow-none ring-0 dark:bg-transparent"
       size={newName.length || 1}
+      key={currentFile.filename}
       value={newName}
       onChange={(e) => setNewName(e.target.value)}
       onKeyDown={(e) => e.key === "Enter" && handleRename()}

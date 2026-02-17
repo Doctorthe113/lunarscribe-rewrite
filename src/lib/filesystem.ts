@@ -35,42 +35,48 @@ function resolvePath(note: Pick<Note, "filename" | "type">) {
 
 // gets unique filename by adding suffix
 export async function getUniqueFilename(note: Pick<Note, "filename" | "type">) {
-  const resolvedPath = resolvePath(note);
-  if (!resolvedPath) return note.filename;
+  const baseName = note.filename.trim().replace(/\.[^/.]+$/, "") || "untitled";
+  const type = note.type;
 
-  const { data: isTaken } = await tryCatch(
-    exists(resolvedPath, { baseDir: BaseDirectory.Document }),
-  );
-  if (!isTaken) return note.filename;
-
-  const baseName = note.filename.trim().replace(/\.[^/.]+$/, "");
-
-  let suffix = 1;
+  let suffix = 0;
   while (true) {
-    const candidateName = `${baseName}(${suffix})`;
-    const candidatePath = resolvePath({ ...note, filename: candidateName });
+    const candidateName = suffix === 0 ? baseName : `${baseName}(${suffix})`;
+    const resolvedPath = resolvePath({ filename: candidateName, type });
+
     const { data: taken } = await tryCatch(
-      exists(candidatePath!, { baseDir: BaseDirectory.Document }),
+      exists(resolvedPath!, { baseDir: BaseDirectory.Document }),
     );
-    if (!taken) return `${candidateName}.${note.type}`;
+
+    if (!taken) return candidateName;
     suffix += 1;
   }
 }
 
-// writes file in lunarscribe folder
-export async function writeFile(note: Note) {
+// saves file in lunarscribe folder
+export async function saveFile(
+  filename: string,
+  type: "md" | "draw",
+  content: string,
+) {
   await ensureLunarscribeDirExists();
 
-  const resolvedPath = resolvePath(note);
+  const resolvedPath = resolvePath({ filename, type });
   if (!resolvedPath) return;
 
   const { error } = await tryCatch(
-    writeTextFile(resolvedPath, note.content, {
+    writeTextFile(resolvedPath, content, {
       baseDir: BaseDirectory.Document,
     }),
   );
-  if (error) throw new Error(`Write failed: ${error}`);
-  return resolvedPath;
+  if (error) throw new Error(`Save failed: ${error}`);
+  return filename;
+}
+
+// creates a new file with unique name
+export async function createFile(type: "md" | "draw", content: string) {
+  const filename = await getUniqueFilename({ filename: "untitled", type });
+  await saveFile(filename, type, content);
+  return filename;
 }
 
 // reads file content
@@ -89,15 +95,15 @@ export async function readFile(note: Pick<Note, "filename" | "type">) {
 export async function renameFile(note: Note, newFilename: string) {
   const oldPath = resolvePath(note);
   const newPath = resolvePath({ ...note, filename: newFilename });
-  if (!oldPath || !newPath) return;
-  if (oldPath === newPath) return newPath;
+  if (!oldPath || !newPath) return note.filename;
+  if (oldPath === newPath) return note.filename;
 
   const targetFilename = await getUniqueFilename({
     ...note,
     filename: newFilename,
   });
   const uniqueNewPath = resolvePath({ ...note, filename: targetFilename });
-  if (!uniqueNewPath) return;
+  if (!uniqueNewPath) return note.filename;
 
   const { error } = await tryCatch(
     rename(oldPath, uniqueNewPath, {
@@ -106,7 +112,7 @@ export async function renameFile(note: Note, newFilename: string) {
     }),
   );
   if (error) throw new Error(`Rename failed: ${error}`);
-  return uniqueNewPath;
+  return targetFilename;
 }
 
 // deletes file

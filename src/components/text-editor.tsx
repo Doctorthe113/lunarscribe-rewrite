@@ -80,7 +80,6 @@ export default function TextEditor() {
     editorRef.current.read(() => {
       const rawText = $getRoot().getTextContent();
       updateNote(currentFile.filename, rawText, currentFile.type);
-      console.log(rawText);
     });
   };
 
