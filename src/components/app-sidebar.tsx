@@ -11,7 +11,7 @@ import {
   SidebarMenuButton,
 } from "@/components/ui/sidebar";
 import { createFile, listFiles, readFile, saveFile } from "@/lib/filesystem";
-import { useNoteStore } from "@/lib/note-zustand";
+import { type Note, useNoteStore } from "@/lib/note-zustand";
 import { Button } from "./ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
 
@@ -40,8 +40,8 @@ const ButtonWithTooltip: React.FC<{
 };
 
 export function AppSidebar() {
-  const { setCurrentFile, buffer, currentFile } = useNoteStore();
-  const [availableFilenames, setAvailableFilenames] = useState<string[]>([]);
+  const { setCurrentFile, currentFile } = useNoteStore();
+  const [availableFiles, setAvailableFiles] = useState<Note[]>([]);
 
   const topButtons = [
     {
@@ -74,16 +74,22 @@ export function AppSidebar() {
     },
   ];
 
-  const changeTabs = async (newTabFilename: string) => {
+  const changeTabs = async (
+    newTabFilename: string,
+    newTabType: "md" | "draw",
+  ) => {
     const content = currentFile?.content || "";
     const type = currentFile?.type || "md";
     await saveFile(currentFile?.filename || newTabFilename, type, content);
 
-    const newContent = await readFile({ filename: newTabFilename, type: "md" });
+    const newContent = await readFile({
+      filename: newTabFilename,
+      type: newTabType,
+    });
     setCurrentFile({
       filename: newTabFilename,
       content: newContent || "",
-      type: "md",
+      type: newTabType,
     });
   };
 
@@ -91,7 +97,15 @@ export function AppSidebar() {
   useEffect(() => {
     async function checkAvailableFiles() {
       const files = await listFiles();
-      setAvailableFilenames(files.map((file) => file.split(".")[0]));
+      const notes: Note[] = files.map((file) => {
+        const [name, ext] = file.split(".");
+        return {
+          filename: name,
+          content: "",
+          type: ext === "draw" ? "draw" : "md",
+        };
+      });
+      setAvailableFiles(notes);
     }
     checkAvailableFiles();
   }, [currentFile]);
@@ -111,33 +125,19 @@ export function AppSidebar() {
         </div>
       </SidebarHeader>
       <SidebarContent>
-        <SidebarGroup className="pt-0">
-          <SidebarGroupLabel>Buffer</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {buffer.map((note) => (
-                <SidebarMenuButton
-                  size={"sm"}
-                  key={note.filename}
-                  onClick={async () => await changeTabs(note.filename)}
-                >
-                  {note.filename}
-                </SidebarMenuButton>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
         <SidebarGroup>
           <SidebarGroupLabel>Available files</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {availableFilenames.map((filename) => (
+              {availableFiles.map((note) => (
                 <SidebarMenuButton
                   size={"sm"}
-                  key={filename}
-                  onClick={async () => await changeTabs(filename)}
+                  key={note.filename}
+                  onClick={async () =>
+                    await changeTabs(note.filename, note.type)
+                  }
                 >
-                  {filename}
+                  {note.filename}
                 </SidebarMenuButton>
               ))}
             </SidebarMenu>

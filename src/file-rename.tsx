@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef } from "react";
 import { toast } from "sonner";
 import { Input } from "./components/ui/input";
 import { renameFile } from "./lib/filesystem";
@@ -7,33 +7,48 @@ import { tryCatch } from "./lib/try-catch";
 
 export function FileRename() {
   const { currentFile, setCurrentFile } = useNoteStore();
-  const [newName, setNewName] = useState(currentFile?.filename || "untitled");
+  const inputRef = useRef<HTMLInputElement>(null);
+  const renameFromRef = useRef(currentFile.filename);
 
   const handleRename = async () => {
-    if (newName === currentFile.filename) return;
+    const newFilename = inputRef.current?.value.trim() ?? "";
+
+    if (!newFilename) {
+      if (inputRef.current) inputRef.current.value = renameFromRef.current;
+      return;
+    }
+
+    if (renameFromRef.current === newFilename) return;
 
     const { data: finalName, error } = await tryCatch(
-      renameFile(currentFile, newName),
+      renameFile(
+        { ...currentFile, filename: renameFromRef.current },
+        newFilename,
+      ),
     );
 
     if (error) {
       toast.error(error.message);
+      if (inputRef.current) inputRef.current.value = renameFromRef.current;
       return;
     }
 
     if (finalName) {
       setCurrentFile({ ...currentFile, filename: finalName });
-      setNewName(finalName);
+      renameFromRef.current = finalName;
     }
   };
 
   return (
     <Input
       className="mx-auto h-6 w-min min-w-0 border-none text-center text-primary shadow-none ring-0 dark:bg-transparent"
-      size={newName.length || 1}
+      ref={inputRef}
       key={currentFile.filename}
-      value={newName}
-      onChange={(e) => setNewName(e.target.value)}
+      size={currentFile.filename.length || 1}
+      defaultValue={currentFile.filename}
+      onFocus={() => {
+        renameFromRef.current = currentFile.filename;
+      }}
       onKeyDown={(e) => e.key === "Enter" && handleRename()}
       onBlur={handleRename}
     />
