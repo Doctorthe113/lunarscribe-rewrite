@@ -3,7 +3,6 @@ import { createRoot } from "react-dom/client";
 import "./index.css";
 import { AppSidebar } from "@/components/app-sidebar";
 import { ThemeProvider } from "@/components/theme-provider";
-import { DarkmodeToggle } from "@/components/ui/darkmode-toggle";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { Toaster } from "@/components/ui/sonner";
 import App from "./App";
@@ -23,7 +22,6 @@ root.render(
           <main className="flex h-screen w-full flex-col overflow-hidden">
             <header className="flex items-center gap-2 bg-sidebar p-2">
               <SidebarTrigger />
-              <DarkmodeToggle />
               <FileRename />
             </header>
             <App />

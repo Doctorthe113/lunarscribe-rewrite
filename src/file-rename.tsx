@@ -41,7 +41,7 @@ export function FileRename() {
 
   return (
     <Input
-      className="mx-auto h-6 w-min min-w-0 border-none text-center text-primary shadow-none ring-0 dark:bg-transparent"
+      className="relative mx-auto h-6 w-min min-w-0 -translate-x-1/2 border-none text-center text-primary shadow-none ring-0 xl:absolute xl:left-1/2 dark:bg-transparent"
       ref={inputRef}
       key={currentFile.filename}
       size={currentFile.filename.length || 1}

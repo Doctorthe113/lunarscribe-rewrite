@@ -6,7 +6,7 @@
 
 :root {
   --background: #f8f7fa;
-  --foreground: #3d3c4f;
+  --foreground: #000000;
   --card: #ffffff;
   --card-foreground: #3d3c4f;
   --popover: #ffffff;
@@ -30,7 +30,7 @@
   --chart-4: #f0c88d;
   --chart-5: #a0bbe3;
   --sidebar: #f1eff5;
-  --sidebar-foreground: #3d3c4f;
+  --sidebar-foreground: #000000;
   --sidebar-primary: #8a79ab;
   --sidebar-primary-foreground: #f8f7fa;
   --sidebar-accent: #e6a5b8;
@@ -177,8 +177,12 @@
 
 @layer base {
   * {
-    @apply border-border outline-ring/50;
+    @apply border-border;
   }
+  [role="checkbox"] {
+    @apply outline-none ring-0;
+  }
+
   body {
     @apply bg-background text-foreground;
   }

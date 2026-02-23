@@ -11,10 +11,15 @@
   },
   "dependencies": {
     "@excalidraw/excalidraw": "^0.18.0",
+    "@lexical/code": "^0.40.0",
+    "@lexical/extension": "^0.40.0",
+    "@lexical/link": "^0.40.0",
+    "@lexical/list": "^0.40.0",
     "@lexical/markdown": "^0.40.0",
     "@lexical/react": "^0.40.0",
     "@lexical/rich-text": "^0.40.0",
     "@lexical/selection": "^0.40.0",
+    "@lexical/table": "^0.40.0",
     "@lexical/utils": "^0.40.0",
     "@tauri-apps/plugin-fs": "~2",
     "class-variance-authority": "^0.7.1",
@@ -26,6 +31,7 @@
     "react-dom": "^19.2.4",
     "sonner": "^2.0.7",
     "tailwind-merge": "^3.4.0",
+    "use-debounce": "^10.1.0",
     "zustand": "^5.0.11"
   },
   "devDependencies": {

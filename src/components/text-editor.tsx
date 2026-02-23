@@ -2,55 +2,88 @@
 
 import {
   $convertFromMarkdownString,
-  BOLD_ITALIC_STAR,
-  BOLD_ITALIC_UNDERSCORE,
-  BOLD_STAR,
-  BOLD_UNDERSCORE,
-  HEADING,
-  ITALIC_STAR,
-  ITALIC_UNDERSCORE,
-  STRIKETHROUGH,
+  $convertToMarkdownString,
 } from "@lexical/markdown";
-import { AutoFocusPlugin } from "@lexical/react/LexicalAutoFocusPlugin";
+import { CheckListPlugin } from "@lexical/react/LexicalCheckListPlugin";
 import { LexicalComposer } from "@lexical/react/LexicalComposer";
 import { ContentEditable } from "@lexical/react/LexicalContentEditable";
 import { EditorRefPlugin } from "@lexical/react/LexicalEditorRefPlugin";
 import { LexicalErrorBoundary } from "@lexical/react/LexicalErrorBoundary";
 import { HistoryPlugin } from "@lexical/react/LexicalHistoryPlugin";
+import { ListPlugin } from "@lexical/react/LexicalListPlugin";
 import { MarkdownShortcutPlugin } from "@lexical/react/LexicalMarkdownShortcutPlugin";
 import { OnChangePlugin } from "@lexical/react/LexicalOnChangePlugin";
 import { RichTextPlugin } from "@lexical/react/LexicalRichTextPlugin";
 import { TabIndentationPlugin } from "@lexical/react/LexicalTabIndentationPlugin";
-import { HeadingNode } from "@lexical/rich-text";
-import { $getRoot, type LexicalEditor } from "lexical";
+import { TablePlugin } from "@lexical/react/LexicalTablePlugin";
+import type { LexicalEditor } from "lexical";
 import { useRef } from "react";
 import { toast } from "sonner";
+import { useDebouncedCallback } from "use-debounce";
+import { saveFile } from "@/lib/filesystem";
+import { CodeHighlightPlugin } from "@/lib/lexical-plugin/code-highlight-plugin";
+import {
+  EDITOR_NODES,
+  MARKDOWN_TRANSFORMERS,
+} from "@/lib/lexical-plugin/custom-transformers";
+import ThematicBreakPlugin from "@/lib/lexical-plugin/thematic-break-plugin";
 import { useNoteStore } from "@/lib/note-zustand";
+import { EditorContextMenu } from "./editor-context-menu";
 
 const THEME = {
   heading: {
-    h1: "text-3xl font-bold mt-4 mb-2",
-    h2: "text-2xl font-bold mt-3 mb-1",
-    h3: "text-xl font-bold mt-2 mb-1",
+    h1: "text-3xl font-bold mt-4 mb-2 text-primary",
+    h2: "text-2xl font-bold mt-3 mb-1 text-blue-200",
+    h3: "text-xl font-bold mt-2 mb-1 text-green-200",
   },
   text: {
     bold: "font-bold",
     italic: "italic",
     strikethrough: "line-through",
     underline: "underline",
+    underlineStrikethrough: "underline line-through",
+    code: "bg-muted px-1 rounded-sm font-mono text-sm",
   },
+  quote: "italic border-l-3 border-primary px-2 bg-muted block",
+  list: {
+    nested: { listitem: "ml-4" },
+    ol: "list-decimal list-inside pl-4",
+    ul: "list-disc list-inside pl-4",
+    listitem: "my-0.5 !outline-none",
+    listitemChecked:
+      "line-through opacity-60 list-none relative ml-2 pl-6 before:content-['✓'] before:absolute before:left-0 !ring-0 !border-0 !outline-none",
+    listitemUnchecked:
+      "list-none relative ml-2 pl-6 before:content-['☐'] before:absolute before:left-0 !ring-0 !border-0 !outline-none",
+  },
+  link: "text-primary underline cursor-pointer",
+  code: "bg-muted block p-3 rounded-md font-mono text-sm overflow-x-auto my-2",
+  codeHighlight: {
+    atrule: "text-[#8839ef] dark:text-[#cba6f7]",
+    attr: "text-[#1e66f5] dark:text-[#89b4fa]",
+    boolean: "text-[#fe640b] dark:text-[#fab387]",
+    builtin: "text-[#d20f39] dark:text-[#f38ba8]",
+    comment: "text-[#9ca0b0] dark:text-[#6c7086]",
+    constant: "text-[#fe640b] dark:text-[#fab387]",
+    deleted: "text-[#d20f39] dark:text-[#f38ba8]",
+    function: "text-[#1e66f5] dark:text-[#89b4fa]",
+    important: "text-[#fe640b] dark:text-[#fab387]",
+    inserted: "text-[#40a02b] dark:text-[#a6e3a1]",
+    keyword: "text-[#8839ef] dark:text-[#cba6f7]",
+    number: "text-[#fe640b] dark:text-[#fab387]",
+    operator: "text-[#04a5e5] dark:text-[#89dceb]",
+    property: "text-[#1e66f5] dark:text-[#89b4fa]",
+    punctuation: "text-[#7c7f93] dark:text-[#9399b2]",
+    regex: "text-[#df8e1d] dark:text-[#f9e2af]",
+    selector: "text-[#04a5e5] dark:text-[#89dceb]",
+    string: "text-[#40a02b] dark:text-[#a6e3a1]",
+    tag: "text-[#1e66f5] dark:text-[#89b4fa]",
+    variable: "text-[#df8e1d] dark:text-[#f9e2af]",
+  },
+  table: "border-collapse w-full my-2 block overflow-x-auto",
+  tableCell: "border border-border p-2 text-left whitespace-nowrap",
+  tableCellHeader:
+    "border border-border p-2 font-bold bg-muted whitespace-nowrap",
 };
-
-const TRANSFORMERS = [
-  HEADING,
-  BOLD_ITALIC_STAR,
-  BOLD_ITALIC_UNDERSCORE,
-  BOLD_STAR,
-  BOLD_UNDERSCORE,
-  ITALIC_STAR,
-  ITALIC_UNDERSCORE,
-  STRIKETHROUGH,
-];
 
 const onError = (error: Error) => {
   toast.error(error.message);
@@ -64,33 +97,42 @@ export default function TextEditor() {
     namespace: "TextEditor",
     theme: THEME,
     onError,
-    nodes: [HeadingNode],
+    nodes: EDITOR_NODES,
     editorState: () =>
       $convertFromMarkdownString(
         currentFile.content || "",
-        TRANSFORMERS,
+        MARKDOWN_TRANSFORMERS,
         undefined,
         true,
       ),
   };
 
-  // saves content to store on change
-  const handleSave = () => {
+  // saves as markdown to store
+  const debouncedSave = useDebouncedCallback(async () => {
     if (!editorRef.current) return;
-    editorRef.current.read(() => {
-      const rawText = $getRoot().getTextContent();
-      updateNote(currentFile.filename, rawText, currentFile.type);
+    editorRef.current.read(async () => {
+      const markdown = $convertToMarkdownString(
+        MARKDOWN_TRANSFORMERS,
+        undefined,
+        true,
+      );
+      updateNote(currentFile.filename, markdown, currentFile.type);
+      await saveFile(currentFile.filename, currentFile.type, markdown);
     });
-  };
+  }, 300);
 
   if (!currentFile) return null;
 
   return (
-    <div className="relative w-full max-w-3xl">
+    <div className="relative flex h-full w-full flex-col overflow-hidden">
       <LexicalComposer initialConfig={initialConfig} key={currentFile.filename}>
         <EditorRefPlugin editorRef={editorRef} />
         <RichTextPlugin
-          contentEditable={<ContentEditable className="outline-none" />}
+          contentEditable={
+            <EditorContextMenu>
+              <ContentEditable className="flex-1 overflow-y-auto outline-none" />
+            </EditorContextMenu>
+          }
           placeholder={
             <div className="pointer-events-none absolute top-0 left-0 opacity-50">
               Start typing...
@@ -98,10 +140,15 @@ export default function TextEditor() {
           }
           ErrorBoundary={LexicalErrorBoundary}
         />
+
         <HistoryPlugin />
-        <OnChangePlugin onChange={handleSave} ignoreSelectionChange />
-        <MarkdownShortcutPlugin transformers={TRANSFORMERS} />
-        <AutoFocusPlugin />
+        <OnChangePlugin onChange={debouncedSave} ignoreSelectionChange />
+        <MarkdownShortcutPlugin transformers={MARKDOWN_TRANSFORMERS} />
+        <ListPlugin />
+        <CheckListPlugin />
+        <TablePlugin />
+        <CodeHighlightPlugin />
+        <ThematicBreakPlugin />
         <TabIndentationPlugin />
       </LexicalComposer>
     </div>

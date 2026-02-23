@@ -14,7 +14,7 @@ type NoteState = {
   updateNote: (filename: string, content: string, type: "md" | "draw") => void;
 };
 
-// store for managing notes with persistence
+// store for managing current note with persistence
 export const useNoteStore = create<NoteState>()(
   persist(
     (set) => ({
@@ -34,7 +34,7 @@ export const useNoteStore = create<NoteState>()(
         })),
     }),
     {
-      name: "lunarscribe-note-store",
+      name: "lunarscribe-note-storage",
     },
   ),
 );

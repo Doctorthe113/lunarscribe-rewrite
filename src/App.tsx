@@ -1,17 +1,17 @@
-import { useState } from "react";
 import ExcalidrawEditor from "@/components/excalidraw-editor";
 import TextEditor from "@/components/text-editor";
+import { useGlobalStore } from "@/lib/global-zustand";
 
 type WindowType = "text" | "draw" | "others";
 
 const WINDOW_MAP: Record<WindowType, React.ReactNode> = {
   text: (
-    <section key="text">
+    <section key="text" className="flex h-full w-full flex-col">
       <TextEditor />
     </section>
   ),
   draw: (
-    <section key="draw">
+    <section key="draw" className="flex h-full w-full flex-col">
       <ExcalidrawEditor />
     </section>
   ),
@@ -19,11 +19,11 @@ const WINDOW_MAP: Record<WindowType, React.ReactNode> = {
 };
 
 export default function App() {
-  const [activeWindow, _setActiveWindow] = useState<WindowType>("text");
+  const activeWindow = useGlobalStore((s) => s.activeWindow);
 
   return (
-    <div className="flex flex-1 flex-col items-center gap-4 overflow-y-auto px-4 py-2">
-      <div className="w-full max-w-3xl space-y-8">
+    <div className="flex min-h-0 w-full flex-1 flex-col items-center gap-4 p-4">
+      <div className="flex min-h-0 w-full max-w-3xl flex-1 flex-col">
         {WINDOW_MAP[activeWindow]}
       </div>
     </div>
