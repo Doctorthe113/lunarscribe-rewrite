@@ -63,7 +63,8 @@ export default function DecoratorNavigationPlugin(): null {
         if (!$isRangeSelection(selection) || !isCollapsedAtStart(selection))
           return false;
 
-        const topLevel = selection.anchor.getNode().getTopLevelElementOrThrow();
+        const topLevel = selection.anchor.getNode().getTopLevelElement();
+        if (!topLevel) return false;
         const prev = topLevel.getPreviousSibling();
         if (!prev || !$isDecoratorNode(prev)) return false;
 
@@ -98,7 +99,8 @@ export default function DecoratorNavigationPlugin(): null {
         if (!$isRangeSelection(selection) || !isCollapsedAtEnd(selection))
           return false;
 
-        const topLevel = selection.anchor.getNode().getTopLevelElementOrThrow();
+        const topLevel = selection.anchor.getNode().getTopLevelElement();
+        if (!topLevel) return false;
         const next = topLevel.getNextSibling();
         if (!next || !$isDecoratorNode(next)) return false;
 

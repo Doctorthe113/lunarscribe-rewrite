@@ -58,9 +58,9 @@ const THEME = {
     ul: "list-disc list-inside pl-4",
     listitem: "my-0.5 !outline-none",
     listitemChecked:
-      "line-through opacity-60 list-none relative ml-2 pl-6 before:content-['✓'] before:absolute before:left-0 !ring-0 !border-0 !outline-none",
+      "list-none relative ml-2 pl-6 cursor-text text-muted-foreground opacity-70 before:content-['✓'] before:absolute before:left-0 before:top-1/2 before:-translate-y-1/2 before:size-4 before:flex before:items-center before:justify-center before:rounded-sm before:border before:border-border before:bg-muted/40 before:text-[10px] before:leading-none before:cursor-pointer !ring-0 !border-0 !outline-none",
     listitemUnchecked:
-      "list-none relative ml-2 pl-6 before:content-['☐'] before:absolute before:left-0 !ring-0 !border-0 !outline-none",
+      "list-none relative ml-2 pl-6 cursor-text before:content-[''] before:absolute before:left-0 before:top-1/2 before:-translate-y-1/2 before:size-4 before:rounded-sm before:border before:border-border before:bg-background before:cursor-pointer !ring-0 !border-0 !outline-none",
   },
   link: "text-primary underline cursor-pointer",
   code: "bg-muted block p-3 rounded-md font-mono text-sm overflow-x-auto my-2",
@@ -93,7 +93,14 @@ const THEME = {
 };
 
 const onError = (error: Error) => {
-  toast.error(error.message);
+  toast.error(error.message, {
+    action: {
+      label: "Copy",
+      onClick: () => {
+        void navigator.clipboard.writeText(error.message);
+      },
+    },
+  });
 };
 
 function TextEditorContent() {

@@ -6,6 +6,7 @@ import {
   $isElementNode,
   $isParagraphNode,
   $isTextNode,
+  $setSelection,
   type LexicalNode,
 } from "lexical";
 import { useEffect, useRef } from "react";
@@ -149,73 +150,88 @@ export default function RawMathBlockPlugin() {
   const isApplyingRef = useRef(false);
 
   useEffect(() => {
-    return editor.registerUpdateListener(({ editorState }) => {
+    return editor.registerUpdateListener(({ editorState, tags }) => {
       if (isApplyingRef.current) return;
+      if (tags.has("math-toggle")) return;
+      if (tags.has("math-auto-convert")) return;
 
-      const { blockReplacements, inlineReplacements } = editorState.read(
-        () => ({
+      const { blockReplacements, inlineReplacements } = editorState.read(() => {
+        const fullText = $getRoot().getTextContent();
+        if (!fullText.includes("$")) {
+          return { blockReplacements: [], inlineReplacements: [] };
+        }
+
+        return {
           blockReplacements: getMathReplacements(),
           inlineReplacements: getInlineMathReplacements(),
-        }),
-      );
+        };
+      });
 
       if (blockReplacements.length === 0 && inlineReplacements.length === 0) {
         return;
       }
 
       isApplyingRef.current = true;
-      editor.update(() => {
-        for (const replacement of blockReplacements) {
-          const startNode = $getNodeByKey(replacement.startNodeKey);
-          const endNode = $getNodeByKey(replacement.endNodeKey);
-          if (!startNode || !endNode) continue;
+      try {
+        editor.update(
+          () => {
+            $setSelection(null);
 
-          if (startNode === endNode) {
-            startNode.replace($createMathBlockNode(replacement.equation));
-            continue;
-          }
+            for (const replacement of blockReplacements) {
+              const startNode = $getNodeByKey(replacement.startNodeKey);
+              const endNode = $getNodeByKey(replacement.endNodeKey);
+              if (!startNode || !endNode) continue;
 
-          const nodesToRemove: LexicalNode[] = [];
-          let cursor: LexicalNode | null = startNode;
+              if (startNode === endNode) {
+                startNode.replace($createMathBlockNode(replacement.equation));
+                continue;
+              }
 
-          while (cursor) {
-            nodesToRemove.push(cursor);
-            if (cursor === endNode) break;
-            cursor = cursor.getNextSibling();
-          }
+              const nodesToRemove: LexicalNode[] = [];
+              let cursor: LexicalNode | null = startNode;
 
-          startNode.replace($createMathBlockNode(replacement.equation));
-          for (
-            let removeIndex = 1;
-            removeIndex < nodesToRemove.length;
-            removeIndex++
-          ) {
-            nodesToRemove[removeIndex].remove();
-          }
-        }
+              while (cursor) {
+                nodesToRemove.push(cursor);
+                if (cursor === endNode) break;
+                cursor = cursor.getNextSibling();
+              }
 
-        for (const replacement of inlineReplacements) {
-          const paragraphNode = $getNodeByKey(replacement.paragraphKey);
-          if (!paragraphNode || !$isElementNode(paragraphNode)) continue;
-
-          const children = paragraphNode.getChildren();
-          for (const child of children) {
-            child.remove();
-          }
-
-          for (const segment of replacement.segments) {
-            if (segment.type === "math") {
-              paragraphNode.append($createMathInlineNode(segment.value));
-              continue;
+              startNode.replace($createMathBlockNode(replacement.equation));
+              for (
+                let removeIndex = 1;
+                removeIndex < nodesToRemove.length;
+                removeIndex++
+              ) {
+                nodesToRemove[removeIndex].remove();
+              }
             }
 
-            if (segment.value.length > 0) {
-              paragraphNode.append($createTextNode(segment.value));
+            for (const replacement of inlineReplacements) {
+              const paragraphNode = $getNodeByKey(replacement.paragraphKey);
+              if (!paragraphNode || !$isElementNode(paragraphNode)) continue;
+
+              const children = paragraphNode.getChildren();
+              for (const child of children) {
+                child.remove();
+              }
+
+              for (const segment of replacement.segments) {
+                if (segment.type === "math") {
+                  paragraphNode.append($createMathInlineNode(segment.value));
+                  continue;
+                }
+
+                if (segment.value.length > 0) {
+                  paragraphNode.append($createTextNode(segment.value));
+                }
+              }
             }
-          }
-        }
-      });
-      isApplyingRef.current = false;
+          },
+          { tag: "math-auto-convert" },
+        );
+      } finally {
+        isApplyingRef.current = false;
+      }
     });
   }, [editor]);
 
