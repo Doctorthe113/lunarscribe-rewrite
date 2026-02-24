@@ -26,9 +26,16 @@ import {
   EDITOR_NODES,
   MARKDOWN_TRANSFORMERS,
 } from "@/lib/lexical-plugin/custom-transformers";
+import DecoratorNavigationPlugin from "@/lib/lexical-plugin/decorator-navigation-plugin";
+import {
+  MathRenderProvider,
+  useMathRenderContext,
+} from "@/lib/lexical-plugin/math/math-render-context";
+import RawMathBlockPlugin from "@/lib/lexical-plugin/math/raw-math-block-plugin";
 import ThematicBreakPlugin from "@/lib/lexical-plugin/thematic-break-plugin";
 import { useNoteStore } from "@/lib/note-zustand";
 import { EditorContextMenu } from "./editor-context-menu";
+import "katex/dist/katex.css";
 
 const THEME = {
   heading: {
@@ -89,9 +96,10 @@ const onError = (error: Error) => {
   toast.error(error.message);
 };
 
-export default function TextEditor() {
+function TextEditorContent() {
   const { currentFile, updateNote } = useNoteStore();
   const editorRef = useRef<LexicalEditor | null>(null);
+  const { mathRenderEnabled } = useMathRenderContext();
 
   const initialConfig = {
     namespace: "TextEditor",
@@ -124,33 +132,43 @@ export default function TextEditor() {
   if (!currentFile) return null;
 
   return (
-    <div className="relative flex h-full w-full flex-col overflow-hidden">
-      <LexicalComposer initialConfig={initialConfig} key={currentFile.filename}>
-        <EditorRefPlugin editorRef={editorRef} />
-        <RichTextPlugin
-          contentEditable={
-            <EditorContextMenu>
-              <ContentEditable className="flex-1 overflow-y-auto outline-none" />
-            </EditorContextMenu>
-          }
-          placeholder={
-            <div className="pointer-events-none absolute top-0 left-0 opacity-50">
-              Start typing...
-            </div>
-          }
-          ErrorBoundary={LexicalErrorBoundary}
-        />
+    <LexicalComposer initialConfig={initialConfig} key={currentFile.filename}>
+      <EditorRefPlugin editorRef={editorRef} />
+      <RichTextPlugin
+        contentEditable={
+          <EditorContextMenu>
+            <ContentEditable className="flex-1 overflow-y-auto outline-none" />
+          </EditorContextMenu>
+        }
+        placeholder={
+          <div className="pointer-events-none absolute top-0 left-0 opacity-50">
+            Start typing...
+          </div>
+        }
+        ErrorBoundary={LexicalErrorBoundary}
+      />
 
-        <HistoryPlugin />
-        <OnChangePlugin onChange={debouncedSave} ignoreSelectionChange />
-        <MarkdownShortcutPlugin transformers={MARKDOWN_TRANSFORMERS} />
-        <ListPlugin />
-        <CheckListPlugin />
-        <TablePlugin />
-        <CodeHighlightPlugin />
-        <ThematicBreakPlugin />
-        <TabIndentationPlugin />
-      </LexicalComposer>
+      <HistoryPlugin />
+      <OnChangePlugin onChange={debouncedSave} ignoreSelectionChange />
+      <MarkdownShortcutPlugin transformers={MARKDOWN_TRANSFORMERS} />
+      <ListPlugin />
+      <CheckListPlugin />
+      <TablePlugin />
+      <CodeHighlightPlugin />
+      {mathRenderEnabled ? <RawMathBlockPlugin /> : null}
+      <ThematicBreakPlugin />
+      <DecoratorNavigationPlugin />
+      <TabIndentationPlugin />
+    </LexicalComposer>
+  );
+}
+
+export default function TextEditor() {
+  return (
+    <div className="relative flex h-full w-full flex-col overflow-hidden">
+      <MathRenderProvider>
+        <TextEditorContent />
+      </MathRenderProvider>
     </div>
   );
 }

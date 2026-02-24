@@ -9,13 +9,17 @@ import { $createHeadingNode, $createQuoteNode } from "@lexical/rich-text";
 import { $setBlocksType } from "@lexical/selection";
 import { INSERT_TABLE_COMMAND } from "@lexical/table";
 import {
+  $createParagraphNode,
+  $createTextNode,
   $getSelection,
   $isRangeSelection,
+  $nodesOfType,
   FORMAT_TEXT_COMMAND,
   type TextFormatType,
 } from "lexical";
 import {
   Bold,
+  Check,
   Code,
   Heading1,
   Heading2,
@@ -23,6 +27,7 @@ import {
   Italic,
   ListOrdered,
   ListTodo,
+  Pi,
   Plus,
   Quote,
   Strikethrough,
@@ -46,6 +51,9 @@ import {
   ContextMenuSubTrigger,
   ContextMenuTrigger,
 } from "@/components/ui/context-menu";
+import { MathBlockNode } from "@/lib/lexical-plugin/math/math-block-node";
+import { MathInlineNode } from "@/lib/lexical-plugin/math/math-inline-node";
+import { useMathRenderContext } from "@/lib/lexical-plugin/math/math-render-context";
 import { useTableActions } from "@/lib/lexical-plugin/table-actions";
 import { useThematicBreak } from "@/lib/lexical-plugin/thematic-break-plugin";
 
@@ -57,6 +65,7 @@ export function EditorContextMenu({ children }: EditorContextMenuProps) {
   const [editor] = useLexicalComposerContext();
   const insertThematicBreak = useThematicBreak();
   const tableActions = useTableActions();
+  const { mathRenderEnabled, toggleMathRender } = useMathRenderContext();
 
   const formatText = (format: TextFormatType) => {
     editor.dispatchCommand(FORMAT_TEXT_COMMAND, format);
@@ -81,6 +90,29 @@ export function EditorContextMenu({ children }: EditorContextMenuProps) {
       rows: "3",
       includeHeaders: true,
     });
+  };
+
+  const onToggleMathRendering = () => {
+    if (!mathRenderEnabled) {
+      toggleMathRender();
+      return;
+    }
+
+    editor.update(() => {
+      const inlineNodes = $nodesOfType(MathInlineNode);
+      for (const inlineNode of inlineNodes) {
+        inlineNode.replace($createTextNode(inlineNode.getTextContent()));
+      }
+
+      const blockNodes = $nodesOfType(MathBlockNode);
+      for (const blockNode of blockNodes) {
+        const paragraphNode = $createParagraphNode();
+        paragraphNode.append($createTextNode(blockNode.getTextContent()));
+        blockNode.replace(paragraphNode);
+      }
+    });
+
+    toggleMathRender();
   };
 
   return (
@@ -221,6 +253,14 @@ export function EditorContextMenu({ children }: EditorContextMenuProps) {
         <ContextMenuItem onClick={insertThematicBreak}>
           <TableRowsSplit className="mr-2 size-4" />
           <span>Horizontal Rule</span>
+        </ContextMenuItem>
+
+        <ContextMenuSeparator />
+
+        <ContextMenuItem onClick={onToggleMathRendering}>
+          <Pi className="mr-2 size-4" />
+          <span>Math Rendering</span>
+          {mathRenderEnabled ? <Check className="ml-auto size-4" /> : null}
         </ContextMenuItem>
       </ContextMenuContent>
     </ContextMenu>

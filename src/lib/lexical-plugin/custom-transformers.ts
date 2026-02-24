@@ -51,6 +51,8 @@ import {
   type LexicalNode,
   TextNode,
 } from "lexical";
+import { MathBlockNode } from "./math/math-block-node";
+import { MathInlineNode } from "./math/math-inline-node";
 
 const createBlockNode = (
   createNode: (match: Array<string>) => ElementNode,
@@ -266,4 +268,6 @@ export const EDITOR_NODES = [
   TableCellNode,
   TableNode,
   TableRowNode,
+  MathBlockNode,
+  MathInlineNode,
 ];

@@ -44,6 +44,7 @@ export default function ThematicBreakPlugin(): null {
       },
       COMMAND_PRIORITY_EDITOR,
     );
+
     registeredRef.current = true;
   }
 
