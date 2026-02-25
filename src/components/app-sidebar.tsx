@@ -234,10 +234,11 @@ export function AppSidebar() {
                       }
                       className={cn(
                         "transition-all",
-                        isSelected && "bg-accent text-accent-foreground",
+                        isSelected &&
+                          "bg-primary font-semibold text-primary-foreground",
                       )}
                     >
-                      <Icon className="size-3 text-foreground/20" />
+                      <Icon className="size-3 opacity-20" />
                       <span>{note.filename}</span>
                     </SidebarMenuButton>
 
