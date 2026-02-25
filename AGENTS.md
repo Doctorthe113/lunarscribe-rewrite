@@ -33,6 +33,7 @@ Key project-specific rules:
 - **Imports**: Explicit (e.g., `import { useState } from "react"`).
 - **Component Imports**:
   - Frontend: `import { Button } from "src/components/ui/button";`
+- **Lexical plugin**: Put custom lexical plugins in `@lib` folder
 
 ## Utilities & Logic
 - **Error Handling**: *STRICTLY* use `tryCatch` from `@lib`. No try/catch blocks.

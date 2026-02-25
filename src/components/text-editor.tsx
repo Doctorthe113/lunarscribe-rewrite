@@ -22,6 +22,7 @@ import { toast } from "sonner";
 import { useDebouncedCallback } from "use-debounce";
 import { saveFile } from "@/lib/filesystem";
 import { CodeHighlightPlugin } from "@/lib/lexical-plugin/code-highlight-plugin";
+import EditorContextMenuPlugin from "@/lib/lexical-plugin/context-menu-plugin";
 import {
   EDITOR_NODES,
   MARKDOWN_TRANSFORMERS,
@@ -34,7 +35,6 @@ import {
 import RawMathBlockPlugin from "@/lib/lexical-plugin/math/raw-math-block-plugin";
 import ThematicBreakPlugin from "@/lib/lexical-plugin/thematic-break-plugin";
 import { useNoteStore } from "@/lib/note-zustand";
-import { EditorContextMenu } from "./editor-context-menu";
 import "katex/dist/katex.css";
 
 const THEME = {
@@ -143,9 +143,7 @@ function TextEditorContent() {
       <EditorRefPlugin editorRef={editorRef} />
       <RichTextPlugin
         contentEditable={
-          <EditorContextMenu>
-            <ContentEditable className="flex-1 overflow-y-auto outline-none" />
-          </EditorContextMenu>
+          <ContentEditable className="flex-1 overflow-y-auto outline-none" />
         }
         placeholder={
           <div className="pointer-events-none absolute top-0 left-0 opacity-50">
@@ -166,6 +164,7 @@ function TextEditorContent() {
       <ThematicBreakPlugin />
       <DecoratorNavigationPlugin />
       <TabIndentationPlugin />
+      <EditorContextMenuPlugin />
     </LexicalComposer>
   );
 }
