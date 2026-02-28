@@ -126,8 +126,40 @@ function SubMenu({
   onLeave: () => void;
   children: ReactNode;
 }) {
+  const triggerRef = useRef<HTMLDivElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
+  const [panelPosition, setPanelPosition] = useState<{
+    leftPx: number;
+    topPx: number;
+  } | null>(null);
+
+  useLayoutEffect(() => {
+    if (!isOpen || !triggerRef.current) return;
+    const rect = triggerRef.current.getBoundingClientRect();
+    setPanelPosition({ leftPx: rect.right + 4, topPx: rect.top });
+  }, [isOpen]);
+
+  useLayoutEffect(() => {
+    if (!isOpen || !panelRef.current || !panelPosition) return;
+    const rect = panelRef.current.getBoundingClientRect();
+    const maxLeftPx = window.innerWidth - rect.width - VIEWPORT_GUTTER_PX;
+    const maxTopPx = window.innerHeight - rect.height - VIEWPORT_GUTTER_PX;
+    const leftPx = Math.max(
+      VIEWPORT_GUTTER_PX,
+      Math.min(panelPosition.leftPx, maxLeftPx),
+    );
+    const topPx = Math.max(
+      VIEWPORT_GUTTER_PX,
+      Math.min(panelPosition.topPx, maxTopPx),
+    );
+    if (leftPx !== panelPosition.leftPx || topPx !== panelPosition.topPx) {
+      setPanelPosition({ leftPx, topPx });
+    }
+  }, [isOpen, panelPosition]);
+
   return (
     <div
+      ref={triggerRef}
       className="relative"
       onMouseEnter={onEnter}
       onMouseLeave={onLeave}
@@ -142,11 +174,21 @@ function SubMenu({
         <span>{label}</span>
         <ChevronRight className="ml-auto size-4" />
       </div>
-      {isOpen && (
-        <div className="absolute top-0 left-full z-50 min-w-48 rounded-md border bg-popover p-1 text-popover-foreground shadow-lg">
-          {children}
-        </div>
-      )}
+      {isOpen &&
+        panelPosition &&
+        createPortal(
+          // biome-ignore lint/a11y/noStaticElementInteractions: <needs to be a div>
+          <div
+            ref={panelRef}
+            className="fixed z-50 min-w-48 rounded-md border bg-popover p-1 text-popover-foreground shadow-lg"
+            style={{ left: panelPosition.leftPx + 4, top: panelPosition.topPx }}
+            onMouseEnter={onEnter}
+            onMouseLeave={onLeave}
+          >
+            {children}
+          </div>,
+          document.body,
+        )}
     </div>
   );
 }
@@ -290,13 +332,6 @@ export default function EditorContextMenuPlugin() {
     };
 
     placeWithinViewport();
-    const frameId = requestAnimationFrame(placeWithinViewport);
-    const settleTimerId = window.setTimeout(placeWithinViewport, 180);
-
-    return () => {
-      cancelAnimationFrame(frameId);
-      window.clearTimeout(settleTimerId);
-    };
   }, [position]);
 
   useEffect(() => {
