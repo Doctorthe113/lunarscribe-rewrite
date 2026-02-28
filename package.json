@@ -11,6 +11,7 @@
     "distribute:flatpak": "bun tauri build --bundles deb && ./scripts/build-flatpak.sh"
   },
   "dependencies": {
+    "@base-ui-components/react": "^1.0.0-rc.0",
     "@excalidraw/excalidraw": "^0.18.0",
     "@lexical/code": "^0.40.0",
     "@lexical/extension": "^0.40.0",

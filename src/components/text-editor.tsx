@@ -20,10 +20,10 @@ import type { EditorState, LexicalEditor } from "lexical";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useDebouncedCallback } from "use-debounce";
+import EditorContextMenu from "@/components/editor-context-menu";
 import { Button } from "@/components/ui/button";
 import { saveFile } from "@/lib/filesystem";
 import { CodeHighlightPlugin } from "@/lib/lexical-plugin/code-highlight-plugin";
-import EditorContextMenuPlugin from "@/lib/lexical-plugin/context-menu-plugin";
 import {
   EDITOR_NODES,
   MARKDOWN_TRANSFORMERS,
@@ -223,7 +223,7 @@ function TextEditorContent() {
       <ThematicBreakPlugin />
       <DecoratorNavigationPlugin />
       <TabIndentationPlugin />
-      <EditorContextMenuPlugin />
+      <EditorContextMenu />
     </LexicalComposer>
   );
 }
