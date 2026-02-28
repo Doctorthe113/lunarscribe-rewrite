@@ -36,6 +36,7 @@ import {
   Italic,
   ListOrdered,
   ListTodo,
+  NotebookPen,
   Pi,
   Plus,
   Quote,
@@ -64,6 +65,7 @@ import { useMathRenderContext } from "@/lib/lexical-plugin/math/math-render-cont
 import { useTableActions } from "@/lib/lexical-plugin/table-actions";
 import { useThematicBreak } from "@/lib/lexical-plugin/thematic-break-plugin";
 import { cn } from "@/lib/utils";
+import { useSourceModeContext } from "./source-mode-context";
 
 type BlockType = "paragraph" | "h1" | "h2" | "h3" | "quote";
 
@@ -74,7 +76,7 @@ const ACTIVE =
 const DESTRUCTIVE =
   "text-destructive hover:bg-destructive/10 hover:text-destructive [&_svg]:!text-destructive";
 const SEP = "-mx-1 my-1 h-px bg-border";
-const VIEWPORT_GUTTER_PX = 8;
+const VIEWPORT_GUTTER_PX = 50;
 
 function MenuItem({
   icon,
@@ -97,6 +99,8 @@ function MenuItem({
     <button
       type="button"
       className={cn(ITEM, active && ACTIVE, destructive && DESTRUCTIVE)}
+      onMouseDown={(event) => event.preventDefault()}
+      onSelect={(event) => event.preventDefault()}
       onClick={onClick}
     >
       {icon}
@@ -194,15 +198,19 @@ function SubMenu({
 }
 
 export default function EditorContextMenuPlugin() {
+  // Editor menu with floating submenus.
   const [editor] = useLexicalComposerContext();
   const insertThematicBreak = useThematicBreak();
   const tableActions = useTableActions();
   const { mathRenderEnabled, toggleMathRender } = useMathRenderContext();
+  const { sourceModeEnabled, toggleSourceMode, setSourceScrollTopPx } =
+    useSourceModeContext();
 
   const [position, setPosition] = useState<{ x: number; y: number } | null>(
     null,
   );
   const [activeSubmenu, setActiveSubmenu] = useState<string | null>(null);
+  const [menuPositioned, setMenuPositioned] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const subTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -223,6 +231,7 @@ export default function EditorContextMenuPlugin() {
   const closeMenu = useCallback(() => {
     setPosition(null);
     setActiveSubmenu(null);
+    setMenuPositioned(false);
   }, []);
 
   // intercept contextmenu on editor root
@@ -231,6 +240,7 @@ export default function EditorContextMenuPlugin() {
     const handler = (e: Event) => {
       e.preventDefault();
       const me = e as MouseEvent;
+      setMenuPositioned(false);
       setPosition({ x: me.clientX, y: me.clientY });
     };
     const unregister = editor.registerRootListener((root, prev) => {
@@ -316,19 +326,33 @@ export default function EditorContextMenuPlugin() {
 
     const placeWithinViewport = () => {
       const rect = el.getBoundingClientRect();
+      const spaceRightPx = window.innerWidth - position.x - VIEWPORT_GUTTER_PX;
+      const spaceBelowPx = window.innerHeight - position.y - VIEWPORT_GUTTER_PX;
+
+      let leftPx = position.x;
+      if (
+        rect.width > spaceRightPx &&
+        position.x - VIEWPORT_GUTTER_PX >= rect.width
+      ) {
+        leftPx = position.x - rect.width;
+      }
+
+      let topPx = position.y;
+      if (
+        rect.height > spaceBelowPx &&
+        position.y - VIEWPORT_GUTTER_PX >= rect.height
+      ) {
+        topPx = position.y - rect.height;
+      }
+
       const maxLeftPx = window.innerWidth - rect.width - VIEWPORT_GUTTER_PX;
       const maxTopPx = window.innerHeight - rect.height - VIEWPORT_GUTTER_PX;
-      const leftPx = Math.max(
-        VIEWPORT_GUTTER_PX,
-        Math.min(position.x, maxLeftPx),
-      );
-      const topPx = Math.max(
-        VIEWPORT_GUTTER_PX,
-        Math.min(position.y, maxTopPx),
-      );
+      leftPx = Math.max(VIEWPORT_GUTTER_PX, Math.min(leftPx, maxLeftPx));
+      topPx = Math.max(VIEWPORT_GUTTER_PX, Math.min(topPx, maxTopPx));
 
       el.style.left = `${leftPx}px`;
       el.style.top = `${topPx}px`;
+      setMenuPositioned(true);
     };
 
     placeWithinViewport();
@@ -422,6 +446,15 @@ export default function EditorContextMenuPlugin() {
       requestAnimationFrame(() => scrollContainer?.scrollTo(0, scrollTop));
     });
 
+  const onToggleSourceMode = () =>
+    act(() => {
+      const scrollContainer = document.querySelector(
+        "[data-editor-scroll-container]",
+      ) as HTMLElement | null;
+      setSourceScrollTopPx(scrollContainer?.scrollTop ?? 0);
+      toggleSourceMode();
+    });
+
   const openSub = (key: string) => {
     if (subTimerRef.current) clearTimeout(subTimerRef.current);
     setActiveSubmenu(key);
@@ -436,7 +469,11 @@ export default function EditorContextMenuPlugin() {
     <div
       ref={menuRef}
       className="fade-in-0 zoom-in-95 fixed z-50 max-h-[95vh] w-64 animate-in overflow-y-auto rounded-md border bg-popover p-1 text-popover-foreground shadow-md"
-      style={{ left: position.x, top: position.y }}
+      style={{
+        left: position.x,
+        top: position.y,
+        visibility: menuPositioned ? "visible" : "hidden",
+      }}
     >
       <MenuItem
         icon={<Bold />}
@@ -663,6 +700,13 @@ export default function EditorContextMenuPlugin() {
         active={mathRenderEnabled}
         onClick={onToggleMath}
         suffix={mathRenderEnabled ? <Check className="ml-auto size-4" /> : null}
+      />
+      <MenuItem
+        icon={<NotebookPen />}
+        label="Source Mode"
+        active={sourceModeEnabled}
+        onClick={onToggleSourceMode}
+        suffix={sourceModeEnabled ? <Check className="ml-auto size-4" /> : null}
       />
     </div>,
     document.body,

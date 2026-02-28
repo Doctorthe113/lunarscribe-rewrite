@@ -16,10 +16,11 @@ import { OnChangePlugin } from "@lexical/react/LexicalOnChangePlugin";
 import { RichTextPlugin } from "@lexical/react/LexicalRichTextPlugin";
 import { TabIndentationPlugin } from "@lexical/react/LexicalTabIndentationPlugin";
 import { TablePlugin } from "@lexical/react/LexicalTablePlugin";
-import type { LexicalEditor } from "lexical";
-import { useRef } from "react";
+import type { EditorState, LexicalEditor } from "lexical";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useDebouncedCallback } from "use-debounce";
+import { Button } from "@/components/ui/button";
 import { saveFile } from "@/lib/filesystem";
 import { CodeHighlightPlugin } from "@/lib/lexical-plugin/code-highlight-plugin";
 import EditorContextMenuPlugin from "@/lib/lexical-plugin/context-menu-plugin";
@@ -33,6 +34,10 @@ import {
   useMathRenderContext,
 } from "@/lib/lexical-plugin/math/math-render-context";
 import RawMathBlockPlugin from "@/lib/lexical-plugin/math/raw-math-block-plugin";
+import {
+  SourceModeProvider,
+  useSourceModeContext,
+} from "@/lib/lexical-plugin/source-mode-context";
 import ThematicBreakPlugin from "@/lib/lexical-plugin/thematic-break-plugin";
 import { useNoteStore } from "@/lib/note-zustand";
 import "katex/dist/katex.css";
@@ -107,6 +112,33 @@ function TextEditorContent() {
   const { currentFile, updateNote } = useNoteStore();
   const editorRef = useRef<LexicalEditor | null>(null);
   const { mathRenderEnabled } = useMathRenderContext();
+  const {
+    sourceModeEnabled,
+    toggleSourceMode,
+    sourceScrollTopPx,
+    setSourceScrollTopPx,
+  } = useSourceModeContext();
+  const [sourceMarkdownText, setSourceMarkdownText] = useState(
+    currentFile.content || "",
+  );
+
+  useEffect(() => {
+    setSourceMarkdownText(currentFile.content || "");
+  }, [currentFile.content]);
+
+  useLayoutEffect(() => {
+    const scrollSelector = sourceModeEnabled
+      ? "[data-editor-scroll-container='source']"
+      : "[data-editor-scroll-container='editor']";
+    const frameId = requestAnimationFrame(() => {
+      const scrollContainer = document.querySelector(
+        scrollSelector,
+      ) as HTMLElement | null;
+      if (!scrollContainer) return;
+      scrollContainer.scrollTop = sourceScrollTopPx;
+    });
+    return () => cancelAnimationFrame(frameId);
+  }, [sourceModeEnabled, sourceScrollTopPx]);
 
   const initialConfig = {
     namespace: "TextEditor",
@@ -123,27 +155,54 @@ function TextEditorContent() {
   };
 
   // saves as markdown to store
-  const debouncedSave = useDebouncedCallback(async () => {
-    if (!editorRef.current) return;
-    editorRef.current.read(async () => {
-      const markdown = $convertToMarkdownString(
-        MARKDOWN_TRANSFORMERS,
-        undefined,
-        true,
-      );
-      updateNote(currentFile.filename, markdown, currentFile.type);
-      await saveFile(currentFile.filename, currentFile.type, markdown);
-    });
+  const debouncedSave = useDebouncedCallback(async (markdown: string) => {
+    updateNote(currentFile.filename, markdown, currentFile.type);
+    await saveFile(currentFile.filename, currentFile.type, markdown);
   }, 300);
 
+  const onChange = (editorState: EditorState) => {
+    const markdown = editorState.read(() =>
+      $convertToMarkdownString(MARKDOWN_TRANSFORMERS, undefined, true),
+    );
+    setSourceMarkdownText(markdown);
+    void debouncedSave(markdown);
+  };
+
   if (!currentFile) return null;
+
+  if (sourceModeEnabled) {
+    return (
+      <div className="relative flex h-full w-full flex-col">
+        <div className="absolute top-2 right-2 z-10">
+          <Button onClick={toggleSourceMode} size="sm" variant="secondary">
+            Exit Source Mode
+          </Button>
+        </div>
+        <pre
+          data-editor-scroll-container="source"
+          className="wrap-break-word h-full overflow-y-auto whitespace-pre-wrap p-4 font-mono text-sm leading-6"
+          onScroll={(event) =>
+            setSourceScrollTopPx(event.currentTarget.scrollTop)
+          }
+        >
+          {sourceMarkdownText}
+        </pre>
+      </div>
+    );
+  }
 
   return (
     <LexicalComposer initialConfig={initialConfig} key={currentFile.filename}>
       <EditorRefPlugin editorRef={editorRef} />
       <RichTextPlugin
         contentEditable={
-          <ContentEditable className="flex-1 overflow-y-auto outline-none" />
+          <ContentEditable
+            data-editor-scroll-container="editor"
+            className="flex-1 overflow-y-auto outline-none"
+            onScroll={(event) =>
+              setSourceScrollTopPx(event.currentTarget.scrollTop)
+            }
+          />
         }
         placeholder={
           <div className="pointer-events-none absolute top-0 left-0 opacity-50">
@@ -154,7 +213,7 @@ function TextEditorContent() {
       />
 
       <HistoryPlugin />
-      <OnChangePlugin onChange={debouncedSave} ignoreSelectionChange />
+      <OnChangePlugin onChange={onChange} ignoreSelectionChange />
       <MarkdownShortcutPlugin transformers={MARKDOWN_TRANSFORMERS} />
       <ListPlugin />
       <CheckListPlugin />
@@ -172,9 +231,11 @@ function TextEditorContent() {
 export default function TextEditor() {
   return (
     <div className="relative flex h-full w-full flex-col overflow-hidden">
-      <MathRenderProvider>
-        <TextEditorContent />
-      </MathRenderProvider>
+      <SourceModeProvider>
+        <MathRenderProvider>
+          <TextEditorContent />
+        </MathRenderProvider>
+      </SourceModeProvider>
     </div>
   );
 }
