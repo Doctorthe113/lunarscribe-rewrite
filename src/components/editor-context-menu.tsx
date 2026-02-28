@@ -15,11 +15,8 @@ import { $setBlocksType } from "@lexical/selection";
 import { INSERT_TABLE_COMMAND } from "@lexical/table";
 import {
   $createParagraphNode,
-  $createTextNode,
   $getSelection,
   $isRangeSelection,
-  $nodesOfType,
-  $setSelection,
   FORMAT_TEXT_COMMAND,
   type TextFormatType,
 } from "lexical";
@@ -36,7 +33,6 @@ import {
   ListOrdered,
   ListTodo,
   NotebookPen,
-  Pi,
   Plus,
   Quote,
   Scissors,
@@ -66,9 +62,6 @@ import {
   ContextMenuSubTrigger,
 } from "@/components/ui/context-menu";
 import { Kbd, KbdGroup } from "@/components/ui/kbd";
-import { MathBlockNode } from "@/lib/lexical-plugin/math/math-block-node";
-import { MathInlineNode } from "@/lib/lexical-plugin/math/math-inline-node";
-import { useMathRenderContext } from "@/lib/lexical-plugin/math/math-render-context";
 import { useSourceModeContext } from "@/lib/lexical-plugin/source-mode-context";
 import { useTableActions } from "@/lib/lexical-plugin/table-actions";
 import { useThematicBreak } from "@/lib/lexical-plugin/thematic-break-plugin";
@@ -144,7 +137,6 @@ export default function EditorContextMenu() {
   const [editor] = useLexicalComposerContext();
   const insertThematicBreak = useThematicBreak();
   const tableActions = useTableActions();
-  const { mathRenderEnabled, toggleMathRender } = useMathRenderContext();
   const { sourceModeEnabled, toggleSourceMode, setSourceScrollTopPx } =
     useSourceModeContext();
 
@@ -268,33 +260,6 @@ export default function EditorContextMenu() {
       editor.focus();
     });
   };
-
-  const onToggleMath = () =>
-    act(() => {
-      if (!mathRenderEnabled) {
-        toggleMathRender();
-        return;
-      }
-      const scrollContainer = document.querySelector(
-        '[class*="overflow-y-auto"]',
-      ) as HTMLElement | null;
-      const scrollTop = scrollContainer?.scrollTop ?? 0;
-      editor.update(
-        () => {
-          for (const n of $nodesOfType(MathInlineNode))
-            n.replace($createTextNode(n.getTextContent()));
-          for (const n of $nodesOfType(MathBlockNode)) {
-            const p = $createParagraphNode();
-            p.append($createTextNode(n.getTextContent()));
-            n.replace(p);
-          }
-          $setSelection(null);
-        },
-        { tag: "math-toggle" },
-      );
-      toggleMathRender();
-      requestAnimationFrame(() => scrollContainer?.scrollTo(0, scrollTop));
-    });
 
   const onToggleSourceMode = () =>
     act(() => {
@@ -538,15 +503,6 @@ export default function EditorContextMenu() {
 
         <ContextMenuSeparator />
 
-        <FormatItem
-          icon={<Pi />}
-          label="Math Rendering"
-          active={mathRenderEnabled}
-          onClick={onToggleMath}
-          suffix={
-            mathRenderEnabled ? <Check className="ml-auto size-4" /> : null
-          }
-        />
         <FormatItem
           icon={<NotebookPen />}
           label="Source Mode"

@@ -1,4 +1,4 @@
-import { Notebook, Pencil, Save, Trash, Upload } from "lucide-react";
+import { NotepadText, Pencil, Save, Trash, Upload } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import {
@@ -125,7 +125,7 @@ export function AppSidebar() {
         setCurrentFile({ filename, content: "", type: "md" });
         setActiveWindow("text");
       },
-      icon: Notebook,
+      icon: NotepadText,
     },
     {
       title: "New drawing note",
@@ -238,7 +238,7 @@ export function AppSidebar() {
           <SidebarGroupContent>
             <SidebarMenu>
               {availableFiles.map((note) => {
-                const Icon = note.type === "draw" ? Pencil : Notebook;
+                const Icon = note.type === "draw" ? Pencil : NotepadText;
                 const isSelected =
                   currentFile.filename === note.filename &&
                   currentFile.type === note.type;
@@ -253,7 +253,7 @@ export function AppSidebar() {
                         await changeTabs(note.filename, note.type)
                       }
                       className={cn(
-                        "transition-all",
+                        "transition-transform duration-150",
                         isSelected &&
                           "bg-primary font-semibold text-primary-foreground",
                       )}

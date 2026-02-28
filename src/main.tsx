@@ -20,7 +20,7 @@ root.render(
         <SidebarProvider>
           <AppSidebar />
           <main className="flex h-screen w-full flex-col overflow-hidden">
-            <header className="flex items-center gap-2 bg-sidebar p-2">
+            <header className="flex items-center gap-2 p-2">
               <SidebarTrigger />
               <FileRename />
             </header>

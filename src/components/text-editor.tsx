@@ -199,7 +199,7 @@ function TextEditorContent() {
         contentEditable={
           <ContentEditable
             data-editor-scroll-container="editor"
-            className="flex-1 overflow-y-auto outline-none"
+            className="flex-1 overflow-y-auto px-0.5 pr-5 outline-none"
             onScroll={(event) =>
               setSourceScrollTopPx(event.currentTarget.scrollTop)
             }

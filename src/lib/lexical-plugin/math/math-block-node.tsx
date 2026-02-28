@@ -2,6 +2,7 @@ import type {
   DOMConversionMap,
   DOMConversionOutput,
   EditorConfig,
+  LexicalEditor,
   LexicalNode,
   NodeKey,
   SerializedLexicalNode,
@@ -86,13 +87,20 @@ export class MathBlockNode extends DecoratorNode<JSX.Element> {
     return this.__equation;
   }
 
+  setEquation(equation: string): void {
+    const writable = this.getWritable();
+    writable.__equation = equation;
+  }
+
   getTextContent(): string {
     return `$$\n${this.__equation}\n$$`;
   }
 
-  decorate(_editor: unknown, config: EditorConfig): JSX.Element {
+  decorate(editor: LexicalEditor, config: EditorConfig): JSX.Element {
     return (
       <MathBlockRenderer
+        editor={editor}
+        nodeKey={this.getKey()}
         equation={this.__equation}
         className={config.theme.code ?? ""}
       />
