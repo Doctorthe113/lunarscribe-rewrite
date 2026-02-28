@@ -126,6 +126,7 @@ function TextEditorContent() {
     setSourceMarkdownText(currentFile.content || "");
   }, [currentFile.content]);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: <extra deps make it jerky>
   useLayoutEffect(() => {
     const scrollSelector = sourceModeEnabled
       ? "[data-editor-scroll-container='source']"
@@ -138,7 +139,7 @@ function TextEditorContent() {
       scrollContainer.scrollTop = sourceScrollTopPx;
     });
     return () => cancelAnimationFrame(frameId);
-  }, [sourceModeEnabled, sourceScrollTopPx]);
+  }, [sourceModeEnabled]);
 
   const initialConfig = {
     namespace: "TextEditor",
