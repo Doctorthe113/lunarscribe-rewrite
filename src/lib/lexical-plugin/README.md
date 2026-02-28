@@ -1,7 +1,7 @@
 # Lexical Plugin Library
 
 This directory contains a collection of custom plugins and utilities that extend the
-**Lexical** editor used throughout the app.  The goal is to keep reusable editor
+**Lexical** editor used throughout the app. The goal is to keep reusable editor
 logic in one place and make it easy to mount features from `TextEditor`.
 
 ## Available Modules

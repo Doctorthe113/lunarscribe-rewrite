@@ -1,5 +1,6 @@
-import { Notebook, Pencil, Save, Trash } from "lucide-react";
+import { Notebook, Pencil, Save, Trash, Upload } from "lucide-react";
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 import {
   Sidebar,
   SidebarContent,
@@ -19,6 +20,7 @@ import {
   saveFile,
 } from "@/lib/filesystem";
 import { useGlobalStore } from "@/lib/global-zustand";
+import { downloadMarkdownPdf } from "@/lib/markdown-to-pdf";
 import { type Note, useNoteStore } from "@/lib/note-zustand";
 import { cn } from "@/lib/utils";
 import { Button } from "./ui/button";
@@ -145,6 +147,24 @@ export function AppSidebar() {
         );
       },
       icon: Save,
+    },
+    {
+      title: "Export to PDF",
+      action: async () => {
+        if (!currentFile || currentFile.type !== "md") return;
+
+        const success = await downloadMarkdownPdf(
+          currentFile.content,
+          currentFile.filename,
+        );
+        if (!success) {
+          toast.error("PDF export failed");
+          return;
+        }
+
+        toast.success("PDF downloaded");
+      },
+      icon: Upload,
     },
   ];
 

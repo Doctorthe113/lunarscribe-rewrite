@@ -39,9 +39,12 @@ Key project-specific rules:
 - **Error Handling**: *STRICTLY* use `tryCatch` from `@lib`. No try/catch blocks.
   ```ts
   import { tryCatch } from "@lib/try-catch";
+  import toast from "sonner";
+
   const { data, error } = await tryCatch(promise);
   if (error) {
-    console.error("Contextual message", error);
+    <!-- use toast to display errors to user -->
+    toast.error("Contextual message", error);
     throw new Error({ code: "INTERNAL_SERVER_ERROR", message: "User-facing message", cause: error });
   }
   return data;
