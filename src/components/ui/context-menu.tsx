@@ -53,7 +53,7 @@ function ContextMenuContent({
       >
         <Menu.Popup
           className={cn(
-            "max-h-(--available-height) min-w-32 overflow-y-auto rounded-md border bg-popover p-1 text-popover-foreground shadow-md",
+            "max-h-(--available-height) min-w-32 overflow-y-auto rounded-md border bg-popover p-1 text-popover-foreground shadow-md outline-none",
             className,
           )}
           {...props}
@@ -79,9 +79,10 @@ function ContextMenuSubTrigger({
   return (
     <Menu.SubmenuTrigger
       className={cn(
-        "flex w-full cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-hidden hover:bg-accent hover:text-accent-foreground [&_svg:not([class*='size-'])]:size-4 [&_svg:not([class*='text-'])]:text-muted-foreground [&_svg]:pointer-events-none [&_svg]:shrink-0",
+        "flex w-full cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-hidden hover:bg-accent hover:text-accent-foreground focus-visible:outline-none [&_svg:not([class*='size-'])]:size-4 [&_svg:not([class*='text-'])]:text-muted-foreground [&_svg]:pointer-events-none [&_svg]:shrink-0",
         className,
       )}
+      onMouseDown={(e) => e.preventDefault()}
       {...props}
     >
       {children}
@@ -99,7 +100,7 @@ function ContextMenuSubContent({
       <Menu.Positioner className="z-50">
         <Menu.Popup
           className={cn(
-            "min-w-32 overflow-hidden rounded-md border bg-popover p-1 text-popover-foreground shadow-lg",
+            "min-w-32 overflow-hidden rounded-md border bg-popover p-1 text-popover-foreground shadow-lg outline-none",
             className,
           )}
           {...props}
@@ -120,9 +121,10 @@ function ContextMenuItem({
     <Menu.Item
       data-variant={variant}
       className={cn(
-        "relative flex w-full cursor-pointer select-none items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-hidden hover:bg-accent hover:text-accent-foreground data-[variant=destructive]:text-destructive data-[variant=destructive]:hover:bg-destructive/10 data-[variant=destructive]:hover:text-destructive [&_svg:not([class*='size-'])]:size-4 [&_svg:not([class*='text-'])]:text-muted-foreground [&_svg]:pointer-events-none [&_svg]:shrink-0 data-[variant=destructive]:*:[svg]:text-destructive!",
+        "relative flex w-full cursor-pointer select-none items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-hidden hover:bg-accent hover:text-accent-foreground focus-visible:outline-none data-[variant=destructive]:text-destructive data-[variant=destructive]:hover:bg-destructive/10 data-[variant=destructive]:hover:text-destructive [&_svg:not([class*='size-'])]:size-4 [&_svg:not([class*='text-'])]:text-muted-foreground [&_svg]:pointer-events-none [&_svg]:shrink-0 data-[variant=destructive]:*:[svg]:text-destructive!",
         className,
       )}
+      onMouseDown={(e) => e.preventDefault()}
       {...props}
     />
   );

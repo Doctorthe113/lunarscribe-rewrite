@@ -128,7 +128,7 @@ function FormatItem({
   return (
     <ContextMenuItem
       className={cn(active && ACTIVE_ITEM)}
-      onSelect={onClick}
+      onClick={onClick}
       variant={destructive ? "destructive" : "default"}
     >
       {icon}
