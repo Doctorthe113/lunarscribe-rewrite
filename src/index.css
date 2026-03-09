@@ -2,6 +2,14 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 
+@font-face {
+  font-family: "Roboto Mono";
+  font-style: normal;
+  font-weight: 100 700;
+  font-display: swap;
+  src: url("./assets/fonts/roboto-mono-variable.woff2") format("woff2");
+}
+
 @custom-variant dark (&:is(.dark *));
 
 :root {
@@ -39,7 +47,7 @@
   --sidebar-ring: #8a79ab;
   --font-sans: Google Sans Flex, ui-sans-serif, sans-serif, system-ui;
   --font-serif: Alkalami, ui-serif, serif;
-  --font-mono: Geist Mono, ui-monospace, monospace;
+  --font-mono: Roboto Mono, ui-monospace, monospace;
   --radius: 0.3rem;
   --shadow-x: 1px;
   --shadow-y: 2px;
@@ -99,7 +107,7 @@
   --sidebar-ring: #a995c9;
   --font-sans: Google Sans Flex, ui-sans-serif, sans-serif, system-ui;
   --font-serif: Alkalami, ui-serif, serif;
-  --font-mono: Geist Mono, ui-monospace, monospace;
+  --font-mono: Roboto Mono, ui-monospace, monospace;
   --radius: 0.3rem;
   --shadow-x: 1px;
   --shadow-y: 2px;
@@ -193,6 +201,6 @@
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground font-mono;
   }
 }

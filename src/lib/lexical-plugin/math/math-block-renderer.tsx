@@ -144,7 +144,10 @@ export default function MathBlockRenderer({
               </Button>
             </div>
             <Textarea
-              className={cn(className, "min-h-48 w-full resize-y font-mono")}
+              className={cn(
+                className,
+                "min-h-48 w-full resize-y overscroll-contain font-mono",
+              )}
               onChange={(event) => onChangeSource(event.target.value)}
               value={sourceValue}
             />
