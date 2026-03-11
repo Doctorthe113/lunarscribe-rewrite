@@ -218,7 +218,7 @@ export function AppSidebar() {
   }, [currentFile.filename, currentFile.type]);
 
   return (
-    <Sidebar className="border-none">
+    <Sidebar className="border-0 border-border border-r">
       <SidebarHeader>
         <div className="flex w-full items-center justify-center gap-2">
           {topButtons.map((button) => (

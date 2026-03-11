@@ -6,6 +6,11 @@ import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { $isMathBlockNode } from "./math-block-node";
 import { $isMathInlineNode } from "./math-inline-node";
@@ -138,10 +143,18 @@ export default function MathBlockRenderer({
         ) : (
           <div>
             <div className="mb-2 flex justify-end">
-              <Button onClick={onToggleMathSource} size="xs" variant="outline">
-                <Code />
-                Render Math
-              </Button>
+              <Tooltip>
+                <TooltipTrigger>
+                  <Button
+                    onClick={onToggleMathSource}
+                    size="xs"
+                    variant="outline"
+                  >
+                    <Code />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Toggle Math Source</TooltipContent>
+              </Tooltip>
             </div>
             <Textarea
               className={cn(
@@ -178,10 +191,14 @@ export default function MathBlockRenderer({
     >
       {inline ? null : (
         <div className="mb-2 flex justify-end">
-          <Button onClick={onToggleMathSource} size="xs" variant="outline">
-            <Code />
-            Source
-          </Button>
+          <Tooltip>
+            <TooltipTrigger>
+              <Button onClick={onToggleMathSource} size="xs" variant="outline">
+                <Code />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Toggle Math Source</TooltipContent>
+          </Tooltip>
         </div>
       )}
       <div
