@@ -51,7 +51,7 @@ const THEME = {
   text: {
     bold: "font-bold",
     italic: "italic",
-    strikethrough: "line-through",
+    strikethrough: "line-through text-destructive",
     underline: "underline",
     underlineStrikethrough: "underline line-through",
     code: "bg-muted px-1 rounded-sm font-mono text-sm",
